@@ -60,9 +60,9 @@
                     layer.on('mouseover', (e) => {
                         const popupContent = `
                             <b>Partido:</b> ${props.provincia || "N/A"}<br>
-                            <b>Valor SAME DAY:</b> $ ${costoHubCaba}<br>
                             <b>Cordon:</b> ${props.CordonCABA || "N/A"}<br>
                         `;
+                        //<b>Valor SAME DAY:</b> $ ${costoHubCaba}<br> (AGREGAR EN LA STRING DE ARRIBA CUANDO HAYA Q PONER PRECIOS)
                         const popup = L.popup()
                             .setLatLng(e.latlng)
                             .setContent(popupContent)
