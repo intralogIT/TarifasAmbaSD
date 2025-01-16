@@ -1,0 +1,6 @@
+{
+    "Cordon1": 100,
+    "Cordon2": 200,
+    "Cordon3": 300,
+    "Cordon4": 400
+}

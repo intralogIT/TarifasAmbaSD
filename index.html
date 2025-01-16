@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa AMBA</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Inicialización del mapa
+        const map = L.map('map').setView([-34.617, -58.445], 10);
+
+        // Capa base del mapa
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+        }).addTo(map);
+
+        // Función para determinar el costo del HUB CABA
+        function getCostoHubCaba(CordonCABA, precios) {
+            if (CordonCABA === 1) {
+                return precios.Cordon1 || "N/A";
+            } else if (CordonCABA === 2) {
+                return precios.Cordon2 || "N/A";
+            } else if (CordonCABA === 3) {
+                return precios.Cordon3 || "N/A";
+            } else if (CordonCABA === 4) {
+                return precios.Cordon4 || "N/A";
+            } else {
+                return "N/A";
+            }
+        }
+
+        // Carga del archivo de precios y GeoJSON
+        Promise.all([
+            fetch('precios.txt').then(res => res.json()),
+            fetch('jsonformatter.txt').then(res => res.json())
+        ])
+        .then(([precios, data]) => {
+            console.log("Precios cargados:", precios);  // Verifica que se estén cargando los precios
+            console.log("Datos GeoJSON cargados:", data);  // Verifica que se cargue correctamente el archivo GeoJSON
+
+            // Carga y renderización del GeoJSON
+            L.geoJSON(data, {
+                onEachFeature: (feature, layer) => {
+                    const props = feature.properties;
+                    console.log("Propiedades de cada feature:", props);  // Verifica las propiedades de cada feature
+
+                    const costoHubCaba = getCostoHubCaba(props.CordonCABA, precios);
+
+                    // Evento al pasar el mouse
+                    layer.on('mouseover', (e) => {
+                        const popupContent = `
+                            <b>Partido:</b> ${props.provincia || "N/A"}<br>
+                            <b>Valor SAME DAY:</b> $ ${costoHubCaba}<br>
+                            <b>Cordon:</b> ${props.CordonCABA || "N/A"}<br>
+                        `;
+                        const popup = L.popup()
+                            .setLatLng(e.latlng)
+                            .setContent(popupContent)
+                            .openOn(map);
+                    });
+
+                    // Cierra el popup cuando el mouse sale
+                    layer.on('mouseout', () => {
+                        map.closePopup();
+                    });
+                },
+                style: (feature) => {
+                    const cordonCABA = feature.properties.CordonCABA;
+                    let color;
+                    if (cordonCABA === 1) {
+                        color = "#F44336"; // Rojo
+                    } else if (cordonCABA === 2) {
+                        color = "#FFA000"; // Naranja
+                    } else if (cordonCABA === 3) {
+                        color = "#4CAF50"; // Verde
+                    } else if (cordonCABA === 4) {
+                        color = "#2196F3"; // Azul
+                    } else {
+                        color = "#3388ff"; // Azul por defecto
+                    }
+
+                    return {
+                        color: color,
+                        weight: 3,
+                        opacity: 1,
+                    };
+                }
+            }).addTo(map);
+        })
+        .catch(error => {
+            console.error('Error al cargar los datos:', error);
+        });
+    </script>
+</body>
+</html>
